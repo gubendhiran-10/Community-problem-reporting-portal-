@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CivicReport — Community Problem Reporting Portal</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #E8EFF8;
+    min-height: 100vh;
+    padding: 30px 16px;
+    display: flex; justify-content: center; align-items: flex-start;
+  }
+  :root {
+    --navy: #0F2544;
+    --civic: #1A6FD4;
+    --civic-dark: #0C447C;
+    --slate: #F0F4FA;
+    --white: #ffffff;
+    --border: 0.5px solid #D0D7E5;
+    --text-primary: #1A1F2E;
+    --text-secondary: #5A6478;
+    --text-tertiary: #8E98AE;
+    --bg-secondary: #F5F7FA;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+  #portal { width: 100%; max-width: 560px; }
+  .p-header {
+    background: var(--navy); color: white;
+    padding: 20px 24px 16px;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .p-logo {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: var(--civic); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .p-logo i { font-size: 22px; color: white; }
+  .p-title { font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 700; }
+  .p-subtitle { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+  .p-user-pill {
+    margin-left: auto; background: rgba(255,255,255,0.12); border-radius: 20px;
+    padding: 5px 12px; font-size: 12px; color: white; display: none; align-items: center; gap: 6px;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .p-user-pill:hover { background: rgba(255,255,255,0.2); }
+  .p-user-pill.show { display: flex; }
+  .p-nav {
+    background: var(--navy); display: flex; padding: 0 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .p-tab {
+    padding: 10px 14px; font-size: 13px; color: rgba(255,255,255,0.5);
+    cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+    transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+  }
+  .p-tab.active { color: white; border-bottom-color: var(--civic); }
+  .p-tab:hover:not(.active) { color: rgba(255,255,255,0.8); }
+  .p-body { background: var(--slate); padding: 20px; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+  .p-card { background: var(--white); border-radius: var(--radius-lg); border: var(--border); padding: 20px; }
+  .p-card + .p-card { margin-top: 14px; }
+  .p-label { font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; display: block; }
+  .p-input {
+    width: 100%; padding: 9px 12px; font-size: 14px; font-family: 'Inter', sans-serif;
+    border: 0.5px solid #C0CAD8; border-radius: var(--radius-md);
+    background: var(--white); color: var(--text-primary); outline: none; transition: border 0.2s;
+  }
+  .p-input:focus { border-color: var(--civic); }
+  .p-row { margin-bottom: 14px; }
+  .p-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .p-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px; border-radius: var(--radius-md);
+    font-size: 14px; font-weight: 500; font-family: 'Inter', sans-serif;
+    cursor: pointer; border: none; transition: all 0.15s;
+  }
+  .p-btn-primary { background: var(--civic); color: white; width: 100%; justify-content: center; }
+  .p-btn-primary:hover { background: var(--civic-dark); }
+  .p-btn-outline {
+    background: transparent; border: 0.5px solid #C0CAD8;
+    color: var(--text-primary); width: 100%; justify-content: center;
+  }
+  .p-btn-outline:hover { background: var(--bg-secondary); }
+  .p-alert {
+    padding: 10px 14px; border-radius: var(--radius-md); font-size: 13px;
+    margin-bottom: 14px; display: none; align-items: center; gap: 8px;
+  }
+  .p-alert.show { display: flex; }
+  .p-alert.success { background: #EAF3DE; color: #27500A; }
+  .p-alert.error { background: #FCEBEB; color: #501313; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge-pending { background: #FAEEDA; color: #633806; }
+  .badge-progress { background: #E6F1FB; color: #0C447C; }
+  .badge-resolved { background: #EAF3DE; color: #27500A; }
+  .tracker { display: flex; align-items: center; margin: 16px 0; }
+  .tracker-step { display: flex; flex-direction: column; align-items: center; flex: 1; }
+  .tracker-dot {
+    width: 28px; height: 28px; border-radius: 50%; border: 2px solid #C0CAD8;
+    background: white; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; transition: all 0.3s; color: var(--text-secondary);
+  }
+  .tracker-dot.done { background: var(--civic); border-color: var(--civic); color: white; }
+  .tracker-dot.active { border-color: var(--civic); color: var(--civic); }
+  .tracker-label { font-size: 10px; color: var(--text-secondary); margin-top: 5px; text-align: center; }
+  .tracker-line { flex: 1; height: 2px; background: #D0D7E5; margin: 0 4px; align-self: center; margin-bottom: 20px; }
+  .tracker-line.done { background: var(--civic); }
+  .p-section { display: none; }
+  .p-section.active { display: block; }
+  .complaint-item { border: var(--border); border-radius: var(--radius-md); padding: 14px; background: var(--white); margin-bottom: 10px; }
+  .complaint-item-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .complaint-item-title { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+  .complaint-meta { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+  .complaint-desc { font-size: 13px; color: var(--text-secondary); margin-top: 8px; padding-top: 8px; border-top: var(--border); }
+  .feedback-box { background: var(--slate); border-radius: var(--radius-md); padding: 8px 10px; font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 12px; text-align: center; }
+  .stat-num { font-size: 22px; font-weight: 500; font-family: 'Poppins', sans-serif; }
+  .stat-pending { color: #633806; } .stat-progress { color: #0C447C; } .stat-resolved { color: #27500A; }
+  .stat-lbl { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+  .empty-state { text-align: center; padding: 32px 0; color: var(--text-secondary); font-size: 14px; }
+  .empty-state i { font-size: 36px; display: block; margin-bottom: 10px; opacity: 0.4; }
+  .divider-label { text-align: center; font-size: 12px; color: var(--text-tertiary); margin: 12px 0; display: flex; align-items: center; gap: 8px; }
+  .divider-label::before, .divider-label::after { content: ''; flex: 1; height: 0.5px; background: #D0D7E5; }
+  .p-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .p-section-title { font-size: 15px; font-weight: 500; color: var(--text-primary); }
+  @media (max-width: 480px) {
+    body { padding: 0; align-items: flex-start; }
+    #portal { max-width: 100%; }
+    .p-header { border-radius: 0; }
+    .p-body { border-radius: 0; }
+    .p-tab { font-size: 12px; padding: 10px 10px; }
+    .p-grid2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div id="portal">
+  <div class="p-header">
+    <div class="p-logo"><i class="ti ti-building-community"></i></div>
+    <div>
+      <div class="p-title">CivicReport</div>
+      <div class="p-subtitle">Community Problem Reporting Portal</div>
+    </div>
+    <div class="p-user-pill" id="userPill" onclick="logoutUser()">
+      <i class="ti ti-user" style="font-size:13px"></i>
+      <span id="pillName">User</span>
+      <i class="ti ti-logout" style="font-size:12px;opacity:0.6"></i>
+    </div>
+  </div>
+  <div class="p-nav">
+    <div class="p-tab active" id="tab-login" onclick="showTab('login')"><i class="ti ti-lock" style="font-size:14px"></i> Login</div>
+    <div class="p-tab" id="tab-register" onclick="showTab('register')"><i class="ti ti-user-plus" style="font-size:14px"></i> Register</div>
+    <div class="p-tab" id="tab-report" onclick="requireAuth('report')"><i class="ti ti-alert-triangle" style="font-size:14px"></i> Report Issue</div>
+    <div class="p-tab" id="tab-mycomplaints" onclick="requireAuth('mycomplaints')"><i class="ti ti-list" style="font-size:14px"></i> My Complaints</div>
+  </div>
+  <div class="p-body">
+    <!-- LOGIN -->
+    <div class="p-section active" id="section-login">
+      <div class="p-card">
+        <div style="text-align:center;margin-bottom:18px;">
+          <div style="font-size:14px;font-weight:500;color:var(--text-primary);">Welcome back</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:3px;">Sign in to report or track issues</div>
+        </div>
+        <div class="p-alert" id="loginAlert"></div>
+        <div class="p-row"><label class="p-label">Username</label><input class="p-input" id="loginUser" placeholder="Enter your username" type="text"></div>
+        <div class="p-row"><label class="p-label">Password</label><input class="p-input" id="loginPass" placeholder="Enter your password" type="password"></div>
+        <button class="p-btn p-btn-primary" onclick="doLogin()"><i class="ti ti-login"></i> Sign in</button>
+        <div class="divider-label">or</div>
+        <button class="p-btn p-btn-outline" onclick="showTab('register')">Create an account</button>
+      </div>
+    </div>
+    <!-- REGISTER -->
+    <div class="p-section" id="section-register">
+      <div class="p-card">
+        <div style="text-align:center;margin-bottom:18px;">
+          <div style="font-size:14px;font-weight:500;color:var(--text-primary);">Create account</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:3px;">Register to report community issues</div>
+        </div>
+        <div class="p-alert" id="regAlert"></div>
+        <div class="p-row"><label class="p-label">Username</label><input class="p-input" id="regUser" placeholder="Choose a username" type="text"></div>
+        <div class="p-row"><label class="p-label">Password</label><input class="p-input" id="regPass" placeholder="Choose a password" type="password"></div>
+        <div class="p-row"><label class="p-label">Confirm Password</label><input class="p-input" id="regPass2" placeholder="Repeat your password" type="password"></div>
+        <button class="p-btn p-btn-primary" onclick="doRegister()"><i class="ti ti-user-plus"></i> Register</button>
+        <div class="divider-label">already have an account?</div>
+        <button class="p-btn p-btn-outline" onclick="showTab('login')">Sign in</button>
+      </div>
+    </div>
+    <!-- REPORT ISSUE -->
+    <div class="p-section" id="section-report">
+      <div class="p-card">
+        <div class="p-section-header"><div class="p-section-title">Submit a complaint</div></div>
+        <div class="p-alert" id="reportAlert"></div>
+        <div class="p-row"><label class="p-label">Problem title</label><input class="p-input" id="rTitle" placeholder="e.g. Pothole on Main Street" type="text"></div>
+        <div class="p-grid2">
+          <div class="p-row"><label class="p-label">Category</label><select class="p-input" id="rDept"><option>Road Damage</option><option>Water Leakage</option><option>Garbage Issue</option><option>Street Light Fault</option><option>Drainage Problem</option><option>Other</option></select></div>
+          <div class="p-row"><label class="p-label">Location</label><input class="p-input" id="rLocation" placeholder="Street / area" type="text"></div>
+        </div>
+        <div class="p-row"><label class="p-label">Description</label><textarea class="p-input" id="rDesc" rows="3" placeholder="Describe the issue clearly..." style="resize:vertical;"></textarea></div>
+        <div class="p-row"><label class="p-label">Photo URL <span style="font-weight:400;opacity:0.6">(optional)</span></label><input class="p-input" id="rPhoto" placeholder="Paste image URL" type="text"></div>
+        <button class="p-btn p-btn-primary" onclick="doReport()"><i class="ti ti-send"></i> Submit complaint</button>
+      </div>
+    </div>
+    <!-- MY COMPLAINTS -->
+    <div class="p-section" id="section-mycomplaints">
+      <div class="p-alert" id="mcAlert"></div>
+      <div id="statsRow" class="stats-row" style="display:none;">
+        <div class="stat-card"><div class="stat-num stat-pending" id="statPending">0</div><div class="stat-lbl">Pending</div></div>
+        <div class="stat-card"><div class="stat-num stat-progress" id="statProgress">0</div><div class="stat-lbl">In Progress</div></div>
+        <div class="stat-card"><div class="stat-num stat-resolved" id="statResolved">0</div><div class="stat-lbl">Resolved</div></div>
+      </div>
+      <div id="complaintsList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── CONFIG ── Use the real Flask backend database */
+const API = "http://127.0.0.1:5000";
+const USE_MOCK = false;
+
+let currentUser = null;
+let mockUsers = [];
+let mockComplaints = [];
+let nextId = 1;
+
+function showTab(name) {
+  ['login','register','report','mycomplaints'].forEach(t => {
+    document.getElementById('section-'+t).classList.remove('active');
+    document.getElementById('tab-'+t).classList.remove('active');
+  });
+  document.getElementById('section-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name === 'mycomplaints') renderComplaints();
+}
+
+function requireAuth(name) {
+  if (!currentUser) { showAlert('loginAlert','Please sign in first.','error'); showTab('login'); return; }
+  showTab(name);
+}
+
+function showAlert(id, msg, type) {
+  const el = document.getElementById(id);
+  el.innerHTML = `<i class="ti ${type==='success'?'ti-circle-check':'ti-alert-circle'}"></i> ${msg}`;
+  el.className = 'p-alert show '+type;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+function doRegister() {
+  const u=document.getElementById('regUser').value.trim();
+  const p=document.getElementById('regPass').value;
+  const p2=document.getElementById('regPass2').value;
+  if (!u||!p) return showAlert('regAlert','Please fill in all fields.','error');
+  if (p!==p2) return showAlert('regAlert','Passwords do not match.','error');
+  if (USE_MOCK) {
+    if (mockUsers.find(x=>x.username===u)) return showAlert('regAlert','Username already taken.','error');
+    mockUsers.push({id:mockUsers.length+1,username:u,password:p});
+    ['regUser','regPass','regPass2'].forEach(id=>document.getElementById(id).value='');
+    showAlert('regAlert','Account created! Please sign in.','success');
+    setTimeout(()=>showTab('login'),1500); return;
+  }
+  fetch(API+'/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})})
+    .then(r=>r.json()).then(d=>{ if(d.error) showAlert('regAlert',d.error,'error'); else { showAlert('regAlert','Registered! Please sign in.','success'); setTimeout(()=>showTab('login'),1500); } }).catch(()=>showAlert('regAlert','Cannot connect to server. Is Flask running?','error'));
+}
+
+function doLogin() {
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value;
+  if (!u||!p) return showAlert('loginAlert','Please fill in all fields.','error');
+  if (USE_MOCK) {
+    const user=mockUsers.find(x=>x.username===u&&x.password===p);
+    if (!user) return showAlert('loginAlert','Invalid username or password.','error');
+    setUser(user); return;
+  }
+  fetch(API+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})})
+    .then(r=>r.json().then(d=>({ok:r.ok,d}))).then(({ok,d})=>{ if(!ok) showAlert('loginAlert',d.error||'Login failed','error'); else setUser({id:d.user_id,username:d.username}); }).catch(()=>showAlert('loginAlert','Cannot connect to server. Is Flask running?','error'));
+}
+
+function setUser(user) {
+  currentUser=user;
+  document.getElementById('pillName').textContent=user.username;
+  document.getElementById('userPill').classList.add('show');
+  ['loginUser','loginPass'].forEach(id=>document.getElementById(id).value='');
+  showAlert('loginAlert','Welcome, '+user.username+'!','success');
+  setTimeout(()=>showTab('mycomplaints'),1000);
+}
+
+function logoutUser() {
+  currentUser=null;
+  document.getElementById('userPill').classList.remove('show');
+  showTab('login');
+}
+
+function doReport() {
+  if (!currentUser) return;
+  const title=document.getElementById('rTitle').value.trim();
+  const dept=document.getElementById('rDept').value;
+  const loc=document.getElementById('rLocation').value.trim();
+  const desc=document.getElementById('rDesc').value.trim();
+  const photo=document.getElementById('rPhoto').value.trim();
+  if (!title||!loc||!desc) return showAlert('reportAlert','Title, location, and description are required.','error');
+  if (USE_MOCK) {
+    mockComplaints.push({id:nextId++,user_id:currentUser.id,title,department:dept,location:loc,description:desc,photo,status:'Pending',feedback:'',created_at:new Date().toLocaleString()});
+    ['rTitle','rLocation','rDesc','rPhoto'].forEach(id=>document.getElementById(id).value='');
+    showAlert('reportAlert','Complaint #'+(nextId-1)+' submitted successfully!','success'); return;
+  }
+  fetch(API+'/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:currentUser.id,title,department:dept,location:loc,description:desc,photo})})
+    .then(r=>r.json().then(d=>({ok:r.ok,d}))).then(({ok,d})=>{ 
+      if(!ok) {
+        showAlert('reportAlert',d.error||'Failed','error');
+        return;
+      }
+      showAlert('reportAlert','Complaint #'+d.id+' submitted!','success');
+      ['rTitle','rLocation','rDesc','rPhoto'].forEach(id=>document.getElementById(id).value='');
+      setTimeout(() => {
+        showTab('mycomplaints');
+        renderComplaints();
+      }, 500);
+    }).catch(()=>showAlert('reportAlert','Cannot connect to server.','error'));
+}
+
+function badgeHtml(s) {
+  if(s==='Pending') return '<span class="badge badge-pending"><i class="ti ti-clock" style="font-size:10px"></i> Pending</span>';
+  if(s==='In Progress') return '<span class="badge badge-progress"><i class="ti ti-loader" style="font-size:10px"></i> In Progress</span>';
+  return '<span class="badge badge-resolved"><i class="ti ti-circle-check" style="font-size:10px"></i> Resolved</span>';
+}
+
+function trackerHtml(status) {
+  const steps=['Submitted','In Review','Resolved'];
+  const idx=status==='Pending'?0:status==='In Progress'?1:2;
+  return '<div class="tracker">'+steps.map((s,i)=>`<div class="tracker-step"><div class="tracker-dot ${i<idx?'done':i===idx?'active':''}">${i<idx?'<i class="ti ti-check" style="font-size:11px"></i>':i+1}</div><div class="tracker-label">${s}</div></div>${i<steps.length-1?`<div class="tracker-line ${i<idx?'done':''}"></div>`:''}`).join('')+'</div>';
+}
+
+function cardHtml(c) {
+  return `<div class="complaint-item">
+    <div class="complaint-item-header">
+      <div><div class="complaint-item-title">#${c.id} — ${c.title}</div>
+      <div class="complaint-meta"><i class="ti ti-map-pin" style="font-size:11px;vertical-align:-1px"></i> ${c.location} &nbsp;·&nbsp; ${c.department}</div></div>
+      ${badgeHtml(c.status)}
+    </div>
+    ${trackerHtml(c.status)}
+    <div class="complaint-desc">${c.description}</div>
+    ${c.feedback?`<div class="feedback-box"><strong>Admin feedback:</strong> ${c.feedback}</div>`:''}
+    <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px;">${c.created_at}</div>
+  </div>`;
+}
+
+function renderComplaints() {
+  if (!currentUser) return;
+
+  const list = document.getElementById('complaintsList');
+  list.innerHTML = '<div class="complaint-item empty-state"><i class="ti ti-inbox"></i>Loading your complaints...</div>';
+
+  fetch(API + '/my_complaints/' + currentUser.id)
+    .then(r => {
+      if (!r.ok) throw new Error('Unable to load complaints');
+      return r.json();
+    })
+    .then(data => {
+      const pending = data.filter(c => c.status === 'Pending').length;
+      const progress = data.filter(c => c.status === 'In Progress').length;
+      const resolved = data.filter(c => c.status === 'Resolved').length;
+
+      document.getElementById('statPending').textContent = pending;
+      document.getElementById('statProgress').textContent = progress;
+      document.getElementById('statResolved').textContent = resolved;
+      document.getElementById('statsRow').style.display = data.length ? 'grid' : 'none';
+
+      list.innerHTML = data.length
+        ? [...data].reverse().map(cardHtml).join('')
+        : '<div class="empty-state"><i class="ti ti-inbox"></i>No complaints yet.</div>';
+    })
+    .catch(() => {
+      document.getElementById('statsRow').style.display = 'none';
+      list.innerHTML = '<div class="complaint-item empty-state"><i class="ti ti-alert-circle"></i>Could not load complaints from the server.</div>';
+      showAlert('mcAlert', 'Unable to load complaints. Please refresh the page and try again.', 'error');
+    });
+}
+</script>
+</body>
+</html>
